@@ -77,6 +77,7 @@ const gameController = (function(){
     const player2 = "O";
     let currentPlayer = player1;
     const getCurrentPlayer = () => currentPlayer;
+    const resetCurrentPlayer = () => {currentPlayer = player1;};
     const switchPlayer = () => {currentPlayer = currentPlayer === player1? player2: player1;};
     const makeMove = (row, column) => {
         let isSuccessfulMove = gameboard.makeMove(row, column, currentPlayer);
@@ -93,21 +94,39 @@ const gameController = (function(){
         }
     };
 
-    return{getCurrentPlayer, makeMove};
+    return{getCurrentPlayer, resetCurrentPlayer, makeMove};
 })();
 
 const displayController = (function(){
     const boardDisplay = document.querySelector("#gameboard");
     const messageDisplay = document.querySelector("#message");
+    const buttonReset = document.querySelector(".reset");
     const boardSize  = gameboard.getBoardSize();
     
     const onCellClick = (e) => {
-        let cellNumber = parseInt(e.target.id.slice(-1));
+        let cellNumber = parseInt(e.target.id.slice(4));
         let row = Math.floor(cellNumber / boardSize);
         let column = cellNumber % boardSize;
         gameController.makeMove(row, column);
         displayBoard();
-    }
+    };
+
+    const checkGameEnd = () =>{
+        let isGameEnded = false;
+        if(gameboard.checkVictory()){
+            messageDisplay.textContent = gameController.getCurrentPlayer() + " is the winner!"
+            isGameEnded = true;
+        }else if(gameboard.checkBoardFull()){
+            messageDisplay.textContent = "It's a tie!"
+            isGameEnded = true;
+        }
+        if(isGameEnded){
+            const cells = document.querySelectorAll(".cell");
+            for(const cell of cells){
+                cell.removeEventListener("click", onCellClick);
+            }
+        }
+    };
 
     const displayBoard = () => {
         const board = gameboard.printBoard();
@@ -127,6 +146,15 @@ const displayController = (function(){
             boardDisplay.appendChild(row);
         }
         messageDisplay.textContent = "It is " + gameController.getCurrentPlayer() + " player's turn. Click on an empty square to make your move.";
-    }
+        checkGameEnd();
+    };
     displayBoard();
+
+    const onResetButtonClick = () => {
+        gameboard.resetBoard();
+        gameController.resetCurrentPlayer();
+        displayBoard();
+    };
+    buttonReset.addEventListener("click", onResetButtonClick);
+
 })();
